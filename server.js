@@ -1,3 +1,4 @@
+require('dotenv').config();
 var express = require('express');
 var http = require('http');
 var bodyParser = require('body-parser');
@@ -36,12 +37,63 @@ function getJSONObject(req) {
 
 router.route('/movies')
     .get( function(req, res) {
+        
         console.log(req.body);
-
         res = res.status(200);
+
+        if (req.get('Content-Type'))
+        {
+            console.log("Content-Type: " + req.get('Conent-Type'));
+            res = res.type(req.get('Content-Type'));
+        }
+
+        res.json(getJSONObject(req));
     })
+    .post( function(req, res) {
+        
+        console.log(req.body);
+        res = res.status(200);
 
+        if (req.get('Content-Type'))
+        {
+            console.log("Content-Type: " + req.get('Conent-Type'));
+            res = res.type(req.get('Content-Type'));
+        }
 
+        res.setHeader("Message", "movie posted");
+        res.json(getJSONObject(req));
+        
+    })
+    .put(authJwtController.isAuthenticated, function(req, res) {
+        
+        console.log(req.body);
+        res = res.status(200);
+
+        if (req.get('Content-Type'))
+        {
+            console.log("Content-Type: " + req.get('Conent-Type'));
+            res = res.type(req.get('Content-Type'));
+        }
+
+        res.setHeader("Message", "movie updated");
+        res.json(getJSONObject(req));
+        
+    })
+    .delete(authJwtController.isAuthenticated, function(req, res) {
+        
+        console.log(req.body);
+        res = res.status(200);
+
+        if (req.get('Content-Type'))
+        {
+            console.log("Content-Type: " + req.get('Conent-Type'));
+            res = res.type(req.get('Content-Type'));
+        }
+
+        res.setHeader("Message", "movie deleted");
+        res.json(getJSONObject(req));
+        
+    })
 
 router.route('/post')
     .post(authController.isAuthenticated, function (req, res) {
