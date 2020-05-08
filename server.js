@@ -20,7 +20,7 @@ var router = express.Router();
 function getJSONObject(req) {
     var json = {
         headers : "No Headers",
-        key: process.env.SECRET_KEY,
+        key: process.env.UNIQUE_KEY,
         body : "No Body"
     };
 
@@ -28,7 +28,7 @@ function getJSONObject(req) {
         json.body = req.body;
     }
     if (req.headers != null) {
-        json.headers = req.headers;
+        json.headers = { status: 200, message: "GET movies", headers: req.headers, query: req.body.q, env: process.env.UNIQUE_KEY};
     }
 
     return json;
