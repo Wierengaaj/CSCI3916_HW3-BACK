@@ -1,3 +1,4 @@
+require('dotenv').config();
 var express = require('express');
 var http = require('http');
 var bodyParser = require('body-parser');
@@ -8,6 +9,7 @@ db = require('./db')(); //global hack
 var jwt = require('jsonwebtoken');
 var cors = require('cors');
 
+console.log('Server Started');
 var app = express();
 app.use(cors());
 app.use(bodyParser.json());
@@ -20,7 +22,7 @@ var router = express.Router();
 function getJSONObject(req) {
     var json = {
         headers : "No Headers",
-        key: process.env.UNIQUE_KEY,
+        key: process.env.SECRET_KEY,
         body : "No Body"
     };
 
@@ -33,6 +35,15 @@ function getJSONObject(req) {
 
     return json;
 }
+
+router.route('/movies')
+    .get( function(req, res) {
+        console.log(req.body);
+
+        res = res.status(200);
+    })
+
+
 
 router.route('/post')
     .post(authController.isAuthenticated, function (req, res) {
@@ -94,6 +105,6 @@ router.post('/signin', function(req, res) {
 });
 
 app.use('/', router);
-app.listen(process.env.PORT || 8080);
+app.listen(process.env.PORT || 3000);
 
 module.exports = app; // for testing
