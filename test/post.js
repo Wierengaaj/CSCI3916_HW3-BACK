@@ -1,6 +1,6 @@
 //Require the dev-dependencies
+require('dotenv').config();
 let envPath = __dirname + "/../.env"
-require('dotenv').config({path:envPath})
 let chai = require('chai');
 let chaiHttp = require('chai-http');
 let server = require('../server');
