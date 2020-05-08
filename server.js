@@ -29,7 +29,58 @@ function getJSONObject(req) {
         json.body = req.body;
     }
     if (req.headers != null) {
-        json.headers = { status: 200, message: "GET movies", headers: req.headers, query: req.body.q, env: process.env.UNIQUE_KEY};
+        json.headers = req.headers;
+    }
+
+    return json;
+}
+
+function postJSONObject(req) {
+    var json = {
+        headers : "No Headers",
+        key: process.env.UNIQUE_KEY,
+        body : "No Body"
+    };
+
+    if (req.body != null) {
+        json.body = req.body;
+    }
+    if (req.headers != null) {
+        json.headers = json.headers = { status: 200, message: "movie posted", headers: req.headers, query: req.body.q, env: process.env.UNIQUE_KEY };
+    }
+
+    return json;
+}
+
+function putJSONObject(req) {
+    var json = {
+        headers : "No Headers",
+        key: process.env.UNIQUE_KEY,
+        body : "No Body"
+    };
+
+    if (req.body != null) {
+        json.body = req.body;
+    }
+    if (req.headers != null) {
+        json.headers = json.headers = { status: 200, message: "movie overwritten", headers: req.headers, query: req.body.q, env: process.env.UNIQUE_KEY };
+    }
+
+    return json;
+}
+
+function deleteJSONObject(req) {
+    var json = {
+        headers : "No Headers",
+        key: process.env.UNIQUE_KEY,
+        body : "No Body"
+    };
+
+    if (req.body != null) {
+        json.body = req.body;
+    }
+    if (req.headers != null) {
+        json.headers = json.headers = { status: 200, message: "movie deleted", headers: req.headers, query: req.body.q, env: process.env.UNIQUE_KEY };
     }
 
     return json;
@@ -43,7 +94,7 @@ router.route('/movies')
 
         if (req.get('Content-Type'))
         {
-            console.log("Content-Type: " + req.get('Conent-Type'));
+            console.log("Content-Type: " + req.get('Content-Type'));
             res = res.type(req.get('Content-Type'));
         }
 
@@ -56,12 +107,12 @@ router.route('/movies')
 
         if (req.get('Content-Type'))
         {
-            console.log("Content-Type: " + req.get('Conent-Type'));
+            console.log("Content-Type: " + req.get('Content-Type'));
             res = res.type(req.get('Content-Type'));
         }
 
         res.setHeader("Message", "movie posted");
-        res.json(getJSONObject(req));
+        res.json(postJSONObject(req));
         
     })
     .put(authJwtController.isAuthenticated, function(req, res) {
@@ -71,12 +122,12 @@ router.route('/movies')
 
         if (req.get('Content-Type'))
         {
-            console.log("Content-Type: " + req.get('Conent-Type'));
+            console.log("Content-Type: " + req.get('Content-Type'));
             res = res.type(req.get('Content-Type'));
         }
 
         res.setHeader("Message", "movie updated");
-        res.json(getJSONObject(req));
+        res.json(putJSONObject(req));
         
     })
     .delete(authJwtController.isAuthenticated, function(req, res) {
@@ -86,12 +137,12 @@ router.route('/movies')
 
         if (req.get('Content-Type'))
         {
-            console.log("Content-Type: " + req.get('Conent-Type'));
+            console.log("Content-Type: " + req.get('Content-Type'));
             res = res.type(req.get('Content-Type'));
         }
 
         res.setHeader("Message", "movie deleted");
-        res.json(getJSONObject(req));
+        res.json(deleteJSONObject(req));
         
     })
 
