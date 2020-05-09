@@ -24,7 +24,7 @@ var router = express.Router();
 
 router.route('/movies')
 // GET ------------------------------------------------------------>
-    .get(authJwtController.isAuthenticated, function(req, res) {
+    .get(/* authJwtController.isAuthenticated,  */function(req, res) {
         
         console.log(req.body);
 
@@ -38,32 +38,9 @@ router.route('/movies')
         })
     })
 // POST------------------------------------------------------------>
-    .post(authJwtController.isAuthenticated, function(req, res) {
+    .post(/* authJwtController.isAuthenticated, */ function(req, res) {
        
         console.log(req.body);
-
-        const usertoken = req.headers.authorization;
-        const token = usertoken.split('');
-        const decoded = jwt.verify(token[1], process.env.SECRET_KEY);
-        console.log(decoded);
-        
-        let requestName = decoded.username;
-        let matchesToken = false; 
-
-        for (i = 0; i < req.body.users.length; i++) {
-            if(requestName === req.body.users[i].userName){
-                matchesToken = true;
-                console.log(matchesToken);
-            }
-        }
-
-        if(!matchesToken){
-            return res.status(401).json({success: false, message: 'User fields empty or doesnt match token, not Authorized .'});
-        }
-        else if (!req.body.name || !req.body.users) {
-            return res.status(400).json({success: false, message: 'Error,  Empty required fields.'});
-        }
-        else {
 
             var movie = new Movie();
 
@@ -86,11 +63,11 @@ router.route('/movies')
                 }
                 res.status(200).json({success: true, message: 'movie saved'});       
             });
-        }    
+       // }    
     
     })
 // PUT------------------------------------------------------------>
-    .put(authJwtController.isAuthenticated, function(req, res) {
+    .put(/* authJwtController.isAuthenticated, */ function(req, res) {
         
         console.log(req.body);
         
@@ -104,7 +81,7 @@ router.route('/movies')
         })
     })
 // DELETE------------------------------------------------------------>    
-    .delete(authJwtController.isAuthenticated, function(req, res) {
+    .delete(/* authJwtController.isAuthenticated,  */function(req, res) {
         
         console.log(req.body);
         
@@ -169,7 +146,7 @@ router.post('/signup', function(req, res) {
 
 router.post('/signin', function(req, res) {
     var userNew = new User();
-    //userNew.name = req.body.name;
+    
     console.log(req.body.username);
     console.log(req.body.password);
     userNew.username = req.body.username;

@@ -7,6 +7,8 @@ mongoose
     .connect(process.env.DB, {
         useUnifiedTopology: true,
         useNewUrlParser: true,
+        useFindAndModify: false, 
+        useUnifiedTopology: true
     })
     .then(() => console.log('Movies DB Connected!'))
     .catch(err => {
@@ -26,7 +28,7 @@ var ActorSchema = new Schema({
 var MovieSchema = new Schema({
     title: { type: String, required: true},
     yearReleased: { type: Date, required: true},
-    genere: { type: String, enum: ['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Thriller', 'Western']},
+    genre: { type: String, enum: ['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Thriller', 'Western']},
     actors: { type: [ActorSchema], required: true },
     
 });
