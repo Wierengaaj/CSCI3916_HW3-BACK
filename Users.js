@@ -15,7 +15,7 @@ mongoose
     })
     .then(() => console.log('Users DB Connected!'))
     .catch(err => {
-        console.log("Todos DB Connection Error" + err.message);
+        console.log("Users DB Connection Error" + err.message);
     });
 mongoose.set('useCreateIndex', true);
 

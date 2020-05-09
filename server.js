@@ -168,23 +168,34 @@ router.post('/signup', function(req, res) {
 })
 
 router.post('/signin', function(req, res) {
+    var userNew = new User();
+    //userNew.name = req.body.name;
+    console.log(req.body.username);
+    console.log(req.body.password);
+    userNew.username = req.body.username;
+    userNew.password = req.body.password;
 
-        var user = db.findOne(req.body.username);
+    User.findOne({ username: userNew.username }).select('name username password').exec(function(err, user) {
+        if (err) res.send(err);
 
-        if (!user) {
-            res.status(401).send({success: false, msg: 'Authentication failed. User not found.'});
+        try{
+            user.comparePassword(userNew.password, function(isMatch){
+                if (isMatch) {
+                    var userToken = {id: user._id, username: user.username};
+                    var token = jwt.sign(userToken, process.env.SECRET_KEY);
+                    res.json({success: true, token: 'JWT ' + token});
+                }
+                else {
+                    res.status(401).send({success: false, message: 'authentication failed.'});
+                }
+            })
         }
-        else {
-            // check if password matches
-            if (req.body.password == user.password)  {
-                var userToken = { id : user.id, username: user.username };
-                var token = jwt.sign(userToken, process.env.SECRET_KEY);
-                res.json({success: true, token: 'JWT ' + token});
-            }
-            else {
-                res.status(401).send({success: false, msg: 'Authentication failed. Wrong password.'});
-            }
-        };
+        catch(err){
+            res.status(401).send({success: false, message: 'authentication failed; user not known or ' + err.name}) //user not know  for debugging purposes
+        }
+
+
+    });
 });
 
 /* router.route('/post')
@@ -214,6 +225,6 @@ router.post('/signin', function(req, res) {
  */
 
 app.use('/', router);
-app.listen(process.env.PORT || 8080);
+app.listen(process.env.PORT || 5000);
 
 module.exports = app; // for testing
