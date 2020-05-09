@@ -9,6 +9,9 @@ db = require('./db')(); //global hack
 var jwt = require('jsonwebtoken');
 var cors = require('cors');
 
+var User = require('./Users');
+var Movie = require('./Movies');
+
 var app = express();
 app.use(cors());
 app.use(bodyParser.json());
@@ -18,172 +21,151 @@ app.use(passport.initialize());
 
 var router = express.Router();
 
-function getJSONObject(req) {
-    var json = {
-        headers : "No Headers",
-        key: process.env.UNIQUE_KEY,
-        body : "No Body"
-    };
-
-    if (req.body != null) {
-        json.body = req.body;
-    }
-    if (req.headers != null) {
-        json.headers = req.headers;
-    }
-
-    return json;
-}
-
-function postJSONObject(req) {
-    var json = {
-        headers : "No Headers",
-        key: process.env.UNIQUE_KEY,
-        body : "No Body"
-    };
-
-    if (req.body != null) {
-        json.body = req.body;
-    }
-    if (req.headers != null) {
-        json.headers = json.headers = { status: 200, message: "movie posted", headers: req.headers, query: req.body.q, env: process.env.UNIQUE_KEY };
-    }
-
-    return json;
-}
-
-function putJSONObject(req) {
-    var json = {
-        headers : "No Headers",
-        key: process.env.UNIQUE_KEY,
-        body : "No Body"
-    };
-
-    if (req.body != null) {
-        json.body = req.body;
-    }
-    if (req.headers != null) {
-        json.headers = json.headers = { status: 200, message: "movie overwritten", headers: req.headers, query: req.body.q, env: process.env.UNIQUE_KEY };
-    }
-
-    return json;
-}
-
-function deleteJSONObject(req) {
-    var json = {
-        headers : "No Headers",
-        key: process.env.UNIQUE_KEY,
-        body : "No Body"
-    };
-
-    if (req.body != null) {
-        json.body = req.body;
-    }
-    if (req.headers != null) {
-        json.headers = json.headers = { status: 200, message: "movie deleted", headers: req.headers, query: req.body.q, env: process.env.UNIQUE_KEY };
-    }
-
-    return json;
-}
 
 router.route('/movies')
-    .get( function(req, res) {
+// GET ------------------------------------------------------------>
+    .get(authJwtController.isAuthenticated, function(req, res) {
         
         console.log(req.body);
-        res = res.status(200);
 
-        if (req.get('Content-Type'))
+        Movie.find(function (err, movie)
         {
-            console.log("Content-Type: " + req.get('Content-Type'));
-            res = res.type(req.get('Content-Type'));
-        }
-
-        res.json(getJSONObject(req));
+            if (err){
+                res.status(500).send(err);
+            } else {
+                res.status(200).json(movie);
+            }
+        })
     })
-    .post( function(req, res) {
-        
+// POST------------------------------------------------------------>
+    .post(authJwtController.isAuthenticated, function(req, res) {
+       
         console.log(req.body);
-        res = res.status(200);
 
-        if (req.get('Content-Type'))
-        {
-            console.log("Content-Type: " + req.get('Content-Type'));
-            res = res.type(req.get('Content-Type'));
+        const usertoken = req.headers.authorization;
+        const token = usertoken.split('');
+        const decoded = jwt.verify(token[1], process.env.SECRET_KEY);
+        console.log(decoded);
+        
+        let requestName = decoded.username;
+        let matchesToken = false; 
+
+        for (i = 0; i < req.body.users.length; i++) {
+            if(requestName === req.body.users[i].userName){
+                matchesToken = true;
+                console.log(matchesToken);
+            }
         }
 
-        res.setHeader("Message", "movie posted");
-        res.json(postJSONObject(req));
-        
+        if(!matchesToken){
+            return res.status(401).json({success: false, message: 'User fields empty or doesnt match token, not Authorized .'});
+        }
+        else if (!req.body.name || !req.body.users) {
+            return res.status(400).json({success: false, message: 'Error,  Empty required fields.'});
+        }
+        else {
+
+            var movie = new Movie();
+
+            movie.title = req.body.title; // Set the title of the new movie
+            
+            if(req.body.yearReleased){
+                movie.yearReleased = new Date(JSON.stringify(req.body.yearReleased)); // Set the released date of the new movie and make it look nice
+            }
+
+            movie.genre = req.body.genre; // Set the genre of the new movie
+            movie.actors = req.body.actors; // Set actors of the new movie
+
+            movie.save(function (err){ //Save the movie to the database
+                if (err) 
+                {
+                    if (err.code ==11000)
+                        return res.status(400).json({success: false, message: 'duplicate movie'});
+                    else
+                        return res.status(500).send(err);
+                }
+                res.status(200).json({success: true, message: 'movie saved'});       
+            });
+        }    
+    
     })
+// PUT------------------------------------------------------------>
     .put(authJwtController.isAuthenticated, function(req, res) {
         
         console.log(req.body);
-        res = res.status(200);
-
-        if (req.get('Content-Type'))
-        {
-            console.log("Content-Type: " + req.get('Content-Type'));
-            res = res.type(req.get('Content-Type'));
-        }
-
-        res.setHeader("Message", "movie updated");
-        res.json(putJSONObject(req));
         
+        Movie.findByIdAndUpdate(req.body.id, req.body, {new:true}, (err,movie) => {
+            if(!movie){
+                return res.status(400).json({ success: false, message: 'movie not found'});
+            }
+            if(err)
+                return res.status(500).send(err);
+            return res.status(200).json({success: true, message: 'movie updated'});
+        })
     })
+// DELETE------------------------------------------------------------>    
     .delete(authJwtController.isAuthenticated, function(req, res) {
         
         console.log(req.body);
-        res = res.status(200);
-
-        if (req.get('Content-Type'))
-        {
-            console.log("Content-Type: " + req.get('Content-Type'));
-            res = res.type(req.get('Content-Type'));
-        }
-
-        res.setHeader("Message", "movie deleted");
-        res.json(deleteJSONObject(req));
         
+        if(!req.body.id)
+        {
+            return res.status(400).json({success: fasle, message: 'id field empty'});
+        }
+        else
+        {
+            Movie.findByIdAndDelete(req.body.id, (err, todo) => {
+                if(!movie) 
+                {
+                    return res.status(400).json({success: false, message: 'no movie found'})
+                }
+                if (err)
+                    return res.status(500).send(err);
+                return res.status(200).json({success: true, message: 'movie deleted'});
+            }) 
+        }
     })
 
-router.route('/post')
-    .post(authController.isAuthenticated, function (req, res) {
-            console.log(req.body);
-            res = res.status(200);
-            if (req.get('Content-Type')) {
-                console.log("Content-Type: " + req.get('Content-Type'));
-                res = res.type(req.get('Content-Type'));
-            }
-            var o = getJSONObject(req);
-            res.json(o);
-        }
-    );
+router.route('/users')
+    .get(authJwtController.isAuthenticated, function (req, res){
+        User.find(function (err, users){
+            if(err) res.send(err);
+            res.json(users);
+        })
+    })
 
-router.route('/postjwt')
-    .post(authJwtController.isAuthenticated, function (req, res) {
-            console.log(req.body);
-            res = res.status(200);
-            if (req.get('Content-Type')) {
-                console.log("Content-Type: " + req.get('Content-Type'));
-                res = res.type(req.get('Content-Type'));
-            }
-            res.send(req.body);
-        }
-    );
+router.route('/users/:userId')
+    .get(authJwtController.isAuthenticated, function (req, res){
+        var id = req.params.userId;
+        User.findById(id, function(err, user){
+            if (err) res.send(err);
+            res.json(user);
+        });
+    })
+
 
 router.post('/signup', function(req, res) {
     if (!req.body.username || !req.body.password) {
         res.json({success: false, msg: 'Please pass username and password.'});
     } else {
-        var newUser = {
-            username: req.body.username,
-            password: req.body.password
-        };
+        var newUser = new User();
+        newUser.name = req.body.name;
+        newUser.username = req.body.username;
+        newUser.password = req.body.password;
+        
         // save the user
-        db.save(newUser); //no duplicate checking
-        res.json({success: true, msg: 'Successful created new user.'});
+        newUser.save(function(err){
+            if (err){
+                if (err.code === 11000)
+                    return res.status(401).json({success: false, message: 'duplicate user'});
+                else
+                    return res.status(401).send(err);
+            }
+
+        res.json({success: true, message: 'user created'});
+        })
     }
-});
+})
 
 router.post('/signin', function(req, res) {
 
@@ -204,6 +186,32 @@ router.post('/signin', function(req, res) {
             }
         };
 });
+
+/* router.route('/post')
+    .post(authController.isAuthenticated, function (req, res) {
+            console.log(req.body);
+            res = res.status(200);
+            if (req.get('Content-Type')) {
+                console.log("Content-Type: " + req.get('Content-Type'));
+                res = res.type(req.get('Content-Type'));
+            }
+            var o = getJSONObject(req);
+            res.json(o);
+        }
+    );
+ */
+/* router.route('/postjwt')
+    .post(authJwtController.isAuthenticated, function (req, res) {
+            console.log(req.body);
+            res = res.status(200);
+            if (req.get('Content-Type')) {
+                console.log("Content-Type: " + req.get('Content-Type'));
+                res = res.type(req.get('Content-Type'));
+            }
+            res.send(req.body);
+        }
+    );
+ */
 
 app.use('/', router);
 app.listen(process.env.PORT || 8080);
